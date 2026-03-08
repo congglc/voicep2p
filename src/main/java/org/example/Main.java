@@ -1,14 +1,13 @@
 package org.example;
 
-import org.example.ui.LoginUI;
+import org.example.ui.swing.LoginFrame;
+import javax.swing.SwingUtilities;
 
 public class Main {
-
     public static void main(String[] args) {
-
-        LoginUI login = new LoginUI();
-        login.start();
-
+        SwingUtilities.invokeLater(() -> {
+            LoginFrame loginFrame = new LoginFrame();
+            loginFrame.setVisible(true);
+        });
     }
-
 }

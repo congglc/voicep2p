@@ -2,44 +2,36 @@ package org.example.client;
 
 import org.example.model.User;
 import org.example.service.HistoryService;
-import org.example.ui.swing.CallFrame;
+import org.example.ui.swing.GroupCallFrame;
 
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.net.Socket;
 import java.util.Date;
 
-public class VoiceClient {
+public class GroupVoiceClient {
 
-    private CallFrame callFrame;
+    private GroupCallFrame callFrame;
     private User currentUser;
-    private String targetIp;
+    private String hostIp;
     private Socket socket;
     private VoiceSender sender;
     private VoiceReceiver receiver;
 
-    public VoiceClient(CallFrame callFrame, User currentUser, String targetIp) {
+    public GroupVoiceClient(GroupCallFrame callFrame, User currentUser, String hostIp) {
         this.callFrame = callFrame;
         this.currentUser = currentUser;
-        this.targetIp = targetIp;
+        this.hostIp = hostIp;
     }
 
     public void connect() {
         try {
-            callFrame.updateStatus("Connecting to " + targetIp + "...");
-            socket = new Socket(targetIp, 5000);
+            socket = new Socket(hostIp, 5001); // Group call port
 
-            // Handshake
             DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
-            DataInputStream dis = new DataInputStream(socket.getInputStream());
+            dos.writeUTF(currentUser.getUsername()); // Send username to host
             
-            dos.writeUTF(currentUser.getUsername());
-            String remoteUser = dis.readUTF();
-
-            callFrame.updateStatus("Connected with " + remoteUser);
-            
-            // Log to history
-            HistoryService.save(new Date().toString() + ": Called " + remoteUser + " at " + targetIp);
+            callFrame.addUser("Host at " + hostIp); // Basic join confirmation
+            HistoryService.save(new Date() + ": Joined Group Call at " + hostIp);
 
             sender = new VoiceSender(socket);
             receiver = new VoiceReceiver(socket);
@@ -48,7 +40,6 @@ public class VoiceClient {
             receiver.start();
 
         } catch (Exception e) {
-            callFrame.updateStatus("Connection failed.");
             e.printStackTrace();
         }
     }
