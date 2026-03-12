@@ -32,16 +32,16 @@ public class VoiceServer {
             callFrame.updateStatus("Waiting for call on port 5000...");
 
             socket = serverSocket.accept();
-            
+
             // Handshake (Send local username, receive remote username)
             DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
             DataInputStream dis = new DataInputStream(socket.getInputStream());
-            
+
             dos.writeUTF(currentUser.getUsername());
             String remoteUser = dis.readUTF();
 
             callFrame.updateStatus("Connected with " + remoteUser);
-            
+
             // Log to history
             HistoryService.save(new Date().toString() + ": Received 1-to-1 call from " + remoteUser);
 
