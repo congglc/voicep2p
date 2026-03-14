@@ -61,6 +61,21 @@ public class HomeFrame extends JFrame {
                                 groupCallFrame.setVisible(true);
                             }
                         });
+                    } else if (message.startsWith("INVITE_1TO1")) {
+                        String[] parts = message.split("\\|");
+                        String hostName = parts[1];
+                        String hostIp = parts[2];
+
+                        SwingUtilities.invokeLater(() -> {
+                            int response = JOptionPane.showConfirmDialog(this,
+                                    hostName + " đang gọi cho bạn. Nhận cuộc gọi?",
+                                    "Cuộc gọi đến từ " + hostName, JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+
+                            if (response == JOptionPane.YES_OPTION) {
+                                CallFrame callFrame = new CallFrame(currentUser, hostIp, false);
+                                callFrame.setVisible(true);
+                            }
+                        });
                     }
                     socket.close();
                 }
@@ -201,7 +216,21 @@ public class HomeFrame extends JFrame {
             if (dialog.isConfirmed() && !dialog.getSelectedUsers().isEmpty()) {
                 User targetUser = dialog.getSelectedUsers().get(0);
                 if (targetUser.getIp() != null) {
-                    CallFrame callFrame = new CallFrame(currentUser, targetUser.getIp(), false);
+                    String targetIp = targetUser.getIp();
+                    String myIp = currentUser.getIp() != null ? currentUser.getIp() : "127.0.0.1";
+
+                    // Gửi thông báo gọi tới người nhận
+                    new Thread(() -> {
+                        try (Socket socket = new Socket(targetIp, 5002);
+                             DataOutputStream dos = new DataOutputStream(socket.getOutputStream())) {
+                            dos.writeUTF("INVITE_1TO1|" + currentUser.getUsername() + "|" + myIp);
+                        } catch (Exception ex) {
+                            System.out.println("Không thể gửi thông báo gọi tới " + targetUser.getUsername());
+                        }
+                    }).start();
+
+                    // Mở phòng Host ngay lập tức để chờ người kia Accept
+                    CallFrame callFrame = new CallFrame(currentUser, null, true);
                     callFrame.setVisible(true);
                 } else {
                     JOptionPane.showMessageDialog(this, "Không tìm thấy IP của user này!");

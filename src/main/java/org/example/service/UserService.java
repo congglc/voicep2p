@@ -11,8 +11,8 @@ public class UserService {
 
     // Giả lập Database đã gán sẵn IP (Nếu test nhiều máy thật, hãy đổi IP này)
     static {
-        users.add(new User("user1", "123", "127.0.0.1"));
-        users.add(new User("user2", "123", "127.0.0.1"));
+        users.add(new User("user1", "123", "10.1.0.168"));
+        users.add(new User("user2", "123", "10.1.0.175"));
         users.add(new User("user3", "123", "127.0.0.1"));
         users.add(new User("user4", "123", "127.0.0.1"));
     }
