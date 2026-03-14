@@ -167,12 +167,7 @@ public class HomeFrame extends JFrame {
         lblHistory.setFont(new Font("Arial", Font.BOLD, 14));
         historyHeader.add(lblHistory, BorderLayout.WEST);
 
-        JButton btnRefresh = new JButton("🔄 Làm mới");
-        btnRefresh.setFocusPainted(false);
-        btnRefresh.addActionListener(e -> refreshHistory());
-        historyHeader.add(btnRefresh, BorderLayout.EAST);
 
-        bodyPanel.add(historyHeader, BorderLayout.NORTH);
 
         String[] columns = {"Thời gian", "Nội dung cuộc gọi"};
         tableModel = new DefaultTableModel(columns, 0);
@@ -196,13 +191,6 @@ public class HomeFrame extends JFrame {
     private void showPersonalCallUI() {
         setupRightPanelBase("Gọi Cá Nhân (1-1)", "👤");
 
-        JButton btnWait = new JButton("🎧 Bật máy chờ gọi đến");
-        btnWait.setBackground(new Color(40, 167, 69));
-        btnWait.setForeground(Color.WHITE);
-        btnWait.addActionListener(e -> {
-            CallFrame callFrame = new CallFrame(currentUser, null, true);
-            callFrame.setVisible(true);
-        });
 
         JButton btnCall = new JButton("📞 Tìm & Gọi người khác");
         btnCall.setBackground(new Color(0, 132, 255));
@@ -237,8 +225,6 @@ public class HomeFrame extends JFrame {
                 }
             }
         });
-
-        actionPanel.add(btnWait);
         actionPanel.add(btnCall);
     }
 
@@ -276,19 +262,9 @@ public class HomeFrame extends JFrame {
             }
         });
 
-        JButton btnJoin = new JButton("🔗 Vào phòng thủ công");
-        btnJoin.setBackground(new Color(0, 132, 255));
-        btnJoin.setForeground(Color.WHITE);
-        btnJoin.addActionListener(e -> {
-            String groupIp = JOptionPane.showInputDialog(this, "Nhập IP của chủ phòng:");
-            if (groupIp != null && !groupIp.trim().isEmpty()) {
-                GroupCallFrame groupCallFrame = new GroupCallFrame(currentUser, groupIp, false);
-                groupCallFrame.setVisible(true);
-            }
-        });
+
 
         actionPanel.add(btnHost);
-        actionPanel.add(btnJoin);
     }
 
     private void refreshHistory() {
