@@ -26,29 +26,28 @@ public class VoiceClient {
 
     public void connect() {
         try {
-            callFrame.updateStatus("Connecting to " + targetIp + "...");
+            callFrame.updateStatus("Signaling " + targetIp + "...");
             socket = new Socket(targetIp, 5000);
 
-            // Handshake
+            // 1. TCP Handshake
             DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
             DataInputStream dis = new DataInputStream(socket.getInputStream());
             
             dos.writeUTF(currentUser.getUsername());
             String remoteUser = dis.readUTF();
 
-            callFrame.updateStatus("Connected with " + remoteUser);
-            
-            // Log to history
-            HistoryService.save(new Date().toString() + ": Called " + remoteUser + " at " + targetIp);
+            callFrame.updateStatus("Connected (P2P UDP): " + remoteUser);
+            HistoryService.save(new Date() + ": [UDP P2P] Called " + remoteUser);
 
-            sender = new VoiceSender(socket);
-            receiver = new VoiceReceiver(socket);
+            // 2. Start UDP Audio (Port 5000)
+            sender = new VoiceSender(targetIp, 5000);
+            receiver = new VoiceReceiver(5000);
 
             sender.start();
             receiver.start();
 
         } catch (Exception e) {
-            callFrame.updateStatus("Connection failed.");
+            callFrame.updateStatus("Failed to reach peer.");
             e.printStackTrace();
         }
     }

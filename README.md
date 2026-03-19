@@ -1,41 +1,27 @@
-# P2P Voice Chat - Hướng Dẫn Chạy & Kiểm Thử (Chỉ Gọi 1-1)
+# P2P Voice Chat - UDP Architecture (VoIP Standard)
 
-Dự án này là một ứng dụng Voice Chat theo mô hình Peer-to-Peer (P2P), được viết bằng Java và sử dụng Socket để truyền tín hiệu âm thanh. Phần giao diện được xây dựng bằng Java Swing. Các tính năng bao gồm:
-- Đăng nhập với Username/Password
-- Gọi thoại âm thanh 1-1 (P2P trực tiếp)
-- Lưu lịch sử cuộc gọi
+Dự án này đã được nâng cấp lên kiến trúc **P2P dựa trên UDP**, đây là tiêu chuẩn thực tế của công nghệ Voice IP (VoIP). 
 
----
-
-## 1. Yêu Cầu Hệ Thống
-- Java Development Kit (JDK) 21 trở lên
-- Có kết nối mạng Lan/Internet (nếu test trên 2 máy tính khác nhau) hoặc dùng Loopback trên cùng 1 máy.
-- Máy tính có Micro (để thu âm) và Loa (để nghe) hoạt động bình thường.
-
-## 2. Cách Chạy Ứng Dụng 
-1. Mở dự án `voice` trong IDE của bạn (IntelliJ IDEA, Eclipse, VS Code...).
-2. Tìm tới file `src/main/java/org/example/Main.java`.
-3. Chạy file `Main.java` (Run `Main.main()`).
-4. Để test các chức năng gọi điện, bạn cần chạy **2 biến thể (instances)** của file `Main` cùng lúc. Bạn có thể mở ứng dụng 2 lần trên cùng 1 máy tính để test offline (Dùng IP là `127.0.0.1` hoặc chọn user trong danh sách nếu app tự nhận IP).
-
-> **Tài khoản đăng nhập mặc định (theo `UserService`):**
-> - **Tài khoản 1:** Username: `user1` | Password: `123`
-> - **Tài khoản 2:** Username: `user2` | Password: `123`
+### 1. Kiến trúc mạng (Hybrid P2P)
+- **Signaling (TCP - Port 5000/5002):** Dùng để trao đổi thông tin mời gọi, xác nhận tên người dùng. TCP đảm bảo lời mời luôn được gửi đến đích (Reliable).
+- **Voice Stream (UDP - Port 5000):** Sau khi kết nối, âm thanh được truyền qua giao thức UDP (`DatagramSocket`). 
+  - **Tốc độ:** Truyền gói tin cực nhanh, không có độ trễ treo ảnh hưởng bởi việc truyền lại gói tin lỗi của TCP.
+  - **Symmetric P2P:** Cả 2 máy đều mở cổng UDP 5000 để bắn và nhận dữ liệu đồng thời.
 
 ---
 
-## 3. Các Tính Năng & Cách Test
+## 2. Cách Chạy & Kiểm Thử
+1. Chạy `Main.java` trên 2 máy tính (hoặc 2 tab trong IDE).
+2. Đăng nhập `user1` và `user2`.
+3. Bấm **"📞 Tìm & Gọi người khác"** trên Máy A, chọn Máy B.
+4. Máy B sẽ nhận được hộp thoại thông báo rung chuông (TCP). Bấm **Yes**.
+5. Cửa sổ thoại hiện ra, lúc này Mic và Loa sẽ bắt đầu truyền qua **UDP**.
+   - Nếu bạn thấy âm thanh mượt mà hơn và ít lag hơn so với bản TCP cũ, nghĩa là UDP đang hoạt động tốt.
+6. Bấm **"End Call"** để giải phóng tài nguyên.
 
-### Trường Hợp: Kiểm thử Gọi 1-1 (1-to-1 Call)
-1. Mở **Ứng dụng 1** đăng nhập `user1`. Mở **Ứng dụng 2** đăng nhập `user2`.
-2. Trên **Ứng dụng 1**, bấm nút **"📞 Tìm & Gọi người khác"**.
-3. Một hộp thoại tìm kiếm hiện ra. Nhập tên `user2` hoặc để trống rồi bấm **Tìm kiếm**.
-4. Chọn `user2` từ danh sách và bấm **Bắt đầu gọi**.
-5. Trên **Ứng dụng 2**, một hộp thoại xác nhận sẽ hiện ra: "user1 đang gọi cho bạn. Nhận cuộc gọi?". Chọn **Yes**.
-6. Cả 2 màn hình sẽ hiện trạng thái "Connected". Lúc này hãy thử nói vào Mic và nghe qua Loa.
-7. Để kết thúc, bấm nút **"End Call"**.
+---
 
-### Trường Hợp: Kiểm thử Lịch Sử Cuộc Gọi
-Mỗi lần có 1 cuộc gọi thành công, hệ thống sẽ tự lưu vào file `history.txt`.
-1. Tại màn hình Home, sau khi đã thực hiện cuộc gọi, phần bảng phía dưới sẽ liệt kê lịch sử cuộc gọi.
-2. Bạn có thể bấm vào danh mục bên trái hoặc khởi động lại ứng dụng để xem lịch sử đã được lưu lại trong file `history.txt`.
+## 3. Lưu ý kỹ thuật cho đề tài
+- **Giao thức:** Sử dụng `DatagramSocket` và `DatagramPacket` trong ứng dụng.
+- **Audio Format:** PCM Signed 44100Hz, 16 bit, Mono (Tiêu chuẩn chất lượng cao).
+- **Buffer:** Kích thước buffer UDP được tối ưu hóa (1024 bytes) để giảm thiểu hiện tượng trễ (Jitter).
