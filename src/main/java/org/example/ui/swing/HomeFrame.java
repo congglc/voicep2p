@@ -46,22 +46,7 @@ public class HomeFrame extends JFrame {
                     DataInputStream dis = new DataInputStream(socket.getInputStream());
                     String message = dis.readUTF();
 
-                    if (message.startsWith("INVITE_GROUP")) {
-                        String[] parts = message.split("\\|");
-                        String hostName = parts[1];
-                        String hostIp = parts[2];
-
-                        SwingUtilities.invokeLater(() -> {
-                            int response = JOptionPane.showConfirmDialog(this,
-                                    hostName + " đang mời bạn vào cuộc gọi nhóm. Tham gia ngay?",
-                                    "Lời mời từ " + hostName, JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE);
-
-                            if (response == JOptionPane.YES_OPTION) {
-                                GroupCallFrame groupCallFrame = new GroupCallFrame(currentUser, hostIp, false);
-                                groupCallFrame.setVisible(true);
-                            }
-                        });
-                    } else if (message.startsWith("INVITE_1TO1")) {
+                    if (message.startsWith("INVITE_1TO1")) {
                         String[] parts = message.split("\\|");
                         String hostName = parts[1];
                         String hostIp = parts[2];
@@ -92,28 +77,23 @@ public class HomeFrame extends JFrame {
         leftPanel.setPreferredSize(new Dimension(260, 0));
         leftPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, Color.LIGHT_GRAY));
 
-        JLabel lblDanhBa = new JLabel("Danh mục Gọi", SwingConstants.CENTER);
+        JLabel lblDanhBa = new JLabel("Danh mục", SwingConstants.CENTER);
         lblDanhBa.setFont(new Font("Arial", Font.BOLD, 16));
         lblDanhBa.setBorder(new EmptyBorder(15, 0, 15, 0));
         leftPanel.add(lblDanhBa, BorderLayout.NORTH);
 
         DefaultListModel<String> menuModel = new DefaultListModel<>();
-        menuModel.addElement("👤 Trò chuyện Cá nhân (1-1)");
-        menuModel.addElement("👥 Trò chuyện Nhóm");
+        menuModel.addElement("👤 Gọi Cá Nhân (1-1)");
 
         JList<String> menuList = new JList<>(menuModel);
         menuList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         menuList.setFont(new Font("Arial", Font.PLAIN, 15));
         menuList.setFixedCellHeight(50);
+        menuList.setSelectedIndex(0);
 
         menuList.addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
-                int index = menuList.getSelectedIndex();
-                if (index == 0) {
-                    showPersonalCallUI();
-                } else if (index == 1) {
-                    showGroupCallUI();
-                }
+                showPersonalCallUI();
             }
         });
 
@@ -122,13 +102,9 @@ public class HomeFrame extends JFrame {
 
         rightPanel = new JPanel(new BorderLayout());
         rightPanel.setBackground(Color.WHITE);
-
-        JLabel lblWelcome = new JLabel("Chọn một chế độ gọi ở danh sách bên trái", SwingConstants.CENTER);
-        lblWelcome.setFont(new Font("Arial", Font.ITALIC, 14));
-        lblWelcome.setForeground(Color.GRAY);
-        rightPanel.add(lblWelcome, BorderLayout.CENTER);
-
         add(rightPanel, BorderLayout.CENTER);
+
+        showPersonalCallUI();
     }
 
     private void setupRightPanelBase(String title, String icon) {
@@ -167,8 +143,6 @@ public class HomeFrame extends JFrame {
         lblHistory.setFont(new Font("Arial", Font.BOLD, 14));
         historyHeader.add(lblHistory, BorderLayout.WEST);
 
-
-
         String[] columns = {"Thời gian", "Nội dung cuộc gọi"};
         tableModel = new DefaultTableModel(columns, 0);
         historyTable = new JTable(tableModel);
@@ -191,23 +165,19 @@ public class HomeFrame extends JFrame {
     private void showPersonalCallUI() {
         setupRightPanelBase("Gọi Cá Nhân (1-1)", "👤");
 
-
         JButton btnCall = new JButton("📞 Tìm & Gọi người khác");
         btnCall.setBackground(new Color(0, 132, 255));
         btnCall.setForeground(Color.WHITE);
         btnCall.addActionListener(e -> {
-            // Mở cửa sổ TÌM KIẾM cho GỌI 1-1
             SearchUserDialog dialog = new SearchUserDialog(this, false, currentUser.getUsername());
             dialog.setVisible(true);
 
-            // Xử lý sau khi người dùng bấm Gọi
             if (dialog.isConfirmed() && !dialog.getSelectedUsers().isEmpty()) {
                 User targetUser = dialog.getSelectedUsers().get(0);
                 if (targetUser.getIp() != null) {
                     String targetIp = targetUser.getIp();
                     String myIp = currentUser.getIp() != null ? currentUser.getIp() : "127.0.0.1";
 
-                    // Gửi thông báo gọi tới người nhận
                     new Thread(() -> {
                         try (Socket socket = new Socket(targetIp, 5002);
                              DataOutputStream dos = new DataOutputStream(socket.getOutputStream())) {
@@ -217,7 +187,6 @@ public class HomeFrame extends JFrame {
                         }
                     }).start();
 
-                    // Mở phòng Host ngay lập tức để chờ người kia Accept
                     CallFrame callFrame = new CallFrame(currentUser, null, true);
                     callFrame.setVisible(true);
                 } else {
@@ -226,45 +195,6 @@ public class HomeFrame extends JFrame {
             }
         });
         actionPanel.add(btnCall);
-    }
-
-    private void showGroupCallUI() {
-        setupRightPanelBase("Gọi Nhóm Tự Động", "👥");
-
-        JButton btnHost = new JButton("🏠 Tạo phòng & Mời bạn bè");
-        btnHost.setBackground(new Color(255, 193, 7));
-        btnHost.addActionListener(e -> {
-            // Mở cửa sổ TÌM KIẾM cho TẠO NHÓM (Chọn được nhiều người bằng cách giữ Ctrl)
-            SearchUserDialog dialog = new SearchUserDialog(this, true, currentUser.getUsername());
-            dialog.setVisible(true);
-
-            // Xử lý sau khi bấm chọn Tạo nhóm
-            if (dialog.isConfirmed() && !dialog.getSelectedUsers().isEmpty()) {
-                // Mở phòng Host
-                GroupCallFrame groupCallFrame = new GroupCallFrame(currentUser, null, true);
-                groupCallFrame.setVisible(true);
-
-                // Gửi thông báo mời tham gia tới các User đã chọn
-                String myIp = currentUser.getIp() != null ? currentUser.getIp() : "127.0.0.1";
-                for (User targetUser : dialog.getSelectedUsers()) {
-                    if (targetUser.getIp() != null) {
-                        String targetIp = targetUser.getIp();
-                        new Thread(() -> {
-                            try (Socket socket = new Socket(targetIp, 5002);
-                                 DataOutputStream dos = new DataOutputStream(socket.getOutputStream())) {
-                                dos.writeUTF("INVITE_GROUP|" + currentUser.getUsername() + "|" + myIp);
-                            } catch (Exception ex) {
-                                System.out.println("Không thể mời " + targetUser.getUsername());
-                            }
-                        }).start();
-                    }
-                }
-            }
-        });
-
-
-
-        actionPanel.add(btnHost);
     }
 
     private void refreshHistory() {
